@@ -3,19 +3,25 @@ use serde_yaml::{self};
 
 use std::fs::File;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Config {
-    token: String,
-    admin: u64,
-    poll_id: u64,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FRoles {
+    pub fox: u64,
 }
 
-pub fn load_config() -> String {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Config {
+    pub token: String,
+    pub admin: u64,
+    pub poll_id: u64,
+    pub roles: FRoles,
+}
+
+pub fn load_config() -> Config {
     println!("Loading config from config.yaml...");
     let f = File::open("config.yaml").expect("Could not load config.yaml");
     let c: Config = serde_yaml::from_reader(f).expect("Could not deserialize yaml.");
     
-    c.token
+    c
 }
 
 pub fn write_poll_id(pid: u64) {
