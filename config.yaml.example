@@ -1,0 +1,5 @@
+#rename this file to just "config.yaml" after filling out the options
+
+token: your-discord-bot-token-here
+admin: your-discord-user-id
+poll_id: 0
