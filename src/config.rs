@@ -5,7 +5,8 @@ use std::fs::File;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FRoles {
-    pub fox: u64,
+    pub id: u64,
+    pub emoji: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -13,7 +14,7 @@ pub struct Config {
     pub token: String,
     pub admin: u64,
     pub poll_id: u64,
-    pub roles: FRoles,
+    pub roles: Vec<FRoles>,
 }
 
 pub fn load_config() -> Config {

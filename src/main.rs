@@ -17,7 +17,6 @@ struct General;
 
 struct FenbotCommand;
 impl TypeMapKey for FenbotCommand {
-    //type Value = Arc<RwLock<HashMap<String, String>>>;
     type Value = Arc<RwLock<Config>>;
 }
 
@@ -26,26 +25,28 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn reaction_add(&self, ctx: Context, rct: Reaction) {     
-        println!("Hey.  This is a test {:?}", rct.emoji.unicode_eq("🦊"));   
+        //println!("Hey.  This is a test {:?}", rct.emoji.unicode_eq("🦊"));   
         let c = {
             let data_read = ctx.data.read().await;
             let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
-            //let fenbot_context = context_lock.read().await;
-            //let pid = fenbot_context.get("pol_msg").unwrap();  //map_or("None".to_string(), |x| x.clone())
-            //let fid = fenbot_context.get("fox_role").unwrap();
-            //(pid.clone().parse::<u64>().unwrap(), fid.clone().parse::<u64>().unwrap())
             let fc = context_lock.read().await;
             fc.clone()
         };
 
         if *rct.message_id.as_u64() == c.poll_id {
             let g = rct.guild_id.unwrap();
-            let rta = RoleId::from(c.roles.fox);
-            let _ = g.member(ctx.clone(), rct.user_id.unwrap())
-                .await.unwrap()
-                .add_role(ctx.clone(), rta)
-                .await.expect("Could not add role to user.");
-            println!("Added role {:?} to {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx).await.unwrap().name);
+            //let rta = RoleId::from(c.roles.fox);
+            for r in c.roles {
+                if rct.emoji.unicode_eq(r.emoji.as_str()) {
+                    let rta = RoleId::from(r.id);
+                    let _ = g.member(ctx.clone(), rct.user_id.unwrap())
+                        .await.unwrap()
+                        .add_role(ctx.clone(), rta)
+                        .await.expect("Could not add role to user.");
+                    println!("Added role {:?} to {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+                }
+            }
+            
         }
     }
 
@@ -53,22 +54,23 @@ impl EventHandler for Handler {
         let c = {
             let data_read = ctx.data.read().await;
             let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
-            //let fenbot_context = context_lock.read().await;
-            //let pid = fenbot_context.get("pol_msg").unwrap();  //map_or("None".to_string(), |x| x.clone()) |x| x.clone())
-            //let fid = fenbot_context.get("fox_role").unwrap();
-            //(pid.clone().parse::<u64>().unwrap(), fid.clone().parse::<u64>().unwrap())
             let fc = context_lock.read().await;
             fc.clone()
         };
 
         if *rct.message_id.as_u64() == c.poll_id {
             let g = rct.guild_id.unwrap();
-            let rta = RoleId::from(c.roles.fox);
-            let _ = g.member(ctx.clone(), rct.user_id.unwrap())
-                .await.unwrap()
-                .remove_role(ctx.clone(), rta)
-                .await.expect("Could not add role to user.");
-                println!("Removed role {:?} from {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx).await.unwrap().name);
+            //let rta = RoleId::from(c.roles.fox);
+            for r in c.roles {
+                if rct.emoji.unicode_eq(r.emoji.as_str()) {
+                    let rta = RoleId::from(r.id);
+                    let _ = g.member(ctx.clone(), rct.user_id.unwrap())
+                        .await.unwrap()
+                        .remove_role(ctx.clone(), rta)
+                        .await.expect("Could not add role to user.");
+                        println!("Removed role {:?} from {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+                }
+            }
         }
     }
 
@@ -93,13 +95,7 @@ async fn main() {
         .expect("Error creating client");
     
     {
-        //client.data = Arc::<fenbot_ctx>::new_uninit();
-        //let mut hm = HashMap::new();
-        //hm.insert("pol_msg".to_string(), c.poll_id.to_string().clone());
-        //hm.insert("fox_role".to_string(), c.roles.fox.to_string().clone());
-        //hm.insert("admin".to_string(), c.admin.to_string().clone());
         let mut data = client.data.write().await;
-        //data.insert::<FenbotCommand>(Arc::new(RwLock::new(hm.clone())));
         data.insert::<FenbotCommand>(Arc::new(RwLock::new(c.clone())));
         
     }
@@ -113,7 +109,6 @@ async fn main() {
 
 #[command]
 async fn print(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    //msg.reply(ctx, "Pong!").await?;
     let print_type = match args.single_quoted::<String>() {
         Ok(x) => x,
         Err(_) => {
@@ -126,8 +121,6 @@ async fn print(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
             let poll_id = {
                 let data_read = ctx.data.read().await;
                 let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
-                //let fenbot_context = context_lock.read().await;
-                //fenbot_context.get("pol_msg").map_or("None".to_string(), |x| x.clone())
                 let fc = context_lock.read().await;
                 fc.poll_id.clone()
             };
@@ -152,8 +145,6 @@ async fn make_poll(ctx: &Context, msg: &Message, mut args: Args) -> CommandResul
     let c = {
         let data_read = ctx.data.read().await;
         let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
-        //let fenbot_context = context_lock.read().await;
-        //fenbot_context.get("admin").unwrap().parse::<u64>().unwrap() 
         let fc = context_lock.read().await;
         fc.clone()
     };
@@ -177,8 +168,6 @@ async fn make_poll(ctx: &Context, msg: &Message, mut args: Args) -> CommandResul
 
             {
                 let mut fctx = context_lock.write().await;
-                //let entry = fctx.entry("pol_msg".to_string()).or_insert("pol_msg".to_string());
-                //*entry = pol_msg.clone();
                 fctx.poll_id = pol_msg.clone();
             }
             config::write_poll_id(pol_msg.clone());
