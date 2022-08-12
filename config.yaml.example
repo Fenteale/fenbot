@@ -2,7 +2,8 @@
 
 token: your-discord-bot-token-here
 admin: your-discord-user-id
-poll_id: 0
-roles:
-  - id: 0
-    emoji: 🦊
+polls:
+  - msg_id: 0
+    roles:
+      - id: 0
+        emoji: 🦊

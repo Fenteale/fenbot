@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use config::Config;
 use serenity::async_trait;
+//use serenity::framework::standard::Command;
 use serenity::prelude::*;
 use serenity::model::channel::Message;
 use serenity::model::channel::Reaction;
@@ -12,7 +13,8 @@ use serenity::framework::standard::macros::{command, group};
 use serenity::framework::standard::{Args, StandardFramework, CommandResult};
 
 #[group]
-#[commands(print, make_poll)]
+//#[commands(print, make_poll)]
+#[commands(print, make_msg)]
 struct General;
 
 struct FenbotCommand;
@@ -33,20 +35,22 @@ impl EventHandler for Handler {
             fc.clone()
         };
 
-        if *rct.message_id.as_u64() == c.poll_id {
-            let g = rct.guild_id.unwrap();
-            //let rta = RoleId::from(c.roles.fox);
-            for r in c.roles {
-                if rct.emoji.unicode_eq(r.emoji.as_str()) {
-                    let rta = RoleId::from(r.id);
-                    let _ = g.member(ctx.clone(), rct.user_id.unwrap())
-                        .await.unwrap()
-                        .add_role(ctx.clone(), rta)
-                        .await.expect("Could not add role to user.");
-                    println!("Added role {:?} to {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+        for p in c.polls {
+            if *rct.message_id.as_u64() == p.msg_id {
+                let g = rct.guild_id.unwrap();
+                //let rta = RoleId::from(c.roles.fox);
+                for r in p.roles {
+                    if rct.emoji.unicode_eq(r.emoji.as_str()) {
+                        let rta = RoleId::from(r.id);
+                        let _ = g.member(ctx.clone(), rct.user_id.unwrap())
+                            .await.unwrap()
+                            .add_role(ctx.clone(), rta)
+                            .await.expect("Could not add role to user.");
+                        println!("Added role {:?} to {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+                    }
                 }
+                
             }
-            
         }
     }
 
@@ -58,17 +62,19 @@ impl EventHandler for Handler {
             fc.clone()
         };
 
-        if *rct.message_id.as_u64() == c.poll_id {
-            let g = rct.guild_id.unwrap();
-            //let rta = RoleId::from(c.roles.fox);
-            for r in c.roles {
-                if rct.emoji.unicode_eq(r.emoji.as_str()) {
-                    let rta = RoleId::from(r.id);
-                    let _ = g.member(ctx.clone(), rct.user_id.unwrap())
-                        .await.unwrap()
-                        .remove_role(ctx.clone(), rta)
-                        .await.expect("Could not add role to user.");
-                        println!("Removed role {:?} from {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+        for p in c.polls {
+            if *rct.message_id.as_u64() == p.msg_id {
+                let g = rct.guild_id.unwrap();
+                //let rta = RoleId::from(c.roles.fox);
+                for r in p.roles {
+                    if rct.emoji.unicode_eq(r.emoji.as_str()) {
+                        let rta = RoleId::from(r.id);
+                        let _ = g.member(ctx.clone(), rct.user_id.unwrap())
+                            .await.unwrap()
+                            .remove_role(ctx.clone(), rta)
+                            .await.expect("Could not add role to user.");
+                            println!("Removed role {:?} from {:?}.", rta.to_role_cached(ctx.clone()).unwrap().name, rct.user(ctx.clone()).await.unwrap().name);
+                    }
                 }
             }
         }
@@ -117,7 +123,7 @@ async fn print(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
         },
     };
     match print_type.as_str(){
-        "poll_id"=> {
+/*        "poll_id"=> {
             let poll_id = {
                 let data_read = ctx.data.read().await;
                 let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
@@ -125,7 +131,7 @@ async fn print(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
                 fc.poll_id.clone()
             };
             msg.channel_id.say(ctx, format!("The poll message id is: {:?}", poll_id)).await?;
-        },
+        },*/
         "this_channel"=> {
             msg.channel_id.say(ctx, format!("This channel's id is: {:?}", msg.channel_id.as_u64())).await?;
         },
@@ -140,6 +146,26 @@ async fn print(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     Ok(())
 }
 
+#[command]
+async fn make_msg(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
+    let c = {
+        let data_read = ctx.data.read().await;
+        let context_lock = data_read.get::<FenbotCommand>().expect("FenbotCommand in TypeMap.").clone();
+        let fc = context_lock.read().await;
+        fc.clone()
+    };
+    if *msg.author.id.as_u64() != c.admin {
+        msg.channel_id.say(ctx, "You are not a fennec fox.").await?;
+        return Ok(());
+    }
+    let cid = args.single::<u64>().unwrap();
+    let mtp = args.rest();
+    let ctp = ChannelId::from(cid);
+    let _ = ctp.say(ctx, mtp).await.expect("Could not print message to requested channel");
+    Ok(())
+}
+
+/*
 #[command]
 async fn make_poll(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let c = {
@@ -178,3 +204,4 @@ async fn make_poll(ctx: &Context, msg: &Message, mut args: Args) -> CommandResul
     };
     Ok(())
 }
+*/

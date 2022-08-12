@@ -10,11 +10,16 @@ pub struct FRoles {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FPoll {
+    pub msg_id: u64,
+    pub roles: Vec<FRoles>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub token: String,
     pub admin: u64,
-    pub poll_id: u64,
-    pub roles: Vec<FRoles>,
+    pub polls: Vec<FPoll>,
 }
 
 pub fn load_config() -> Config {
@@ -25,6 +30,7 @@ pub fn load_config() -> Config {
     c
 }
 
+/*
 pub fn write_poll_id(pid: u64) {
     println!("Writing poll id to file...");
 
@@ -40,3 +46,4 @@ pub fn write_poll_id(pid: u64) {
     serde_yaml::to_writer(f, &c).unwrap();
     println!("Poll id saved in config.yaml.");
 }
+*/
